@@ -149,14 +149,22 @@ jobs:
           chmod +x Tools/alt-icons.sh
           Tools/alt-icons.sh "$OUT_IPA"
 
+      # archive: false uploads the raw .ipa (no zip wrapper).
+      # Only one file per step is allowed, and the file name becomes the artifact name.
       - name: Upload IPA artifact
         if: ${{ inputs.upload_method == 'artifacts' || inputs.upload_method == 'both' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: EeveeSpotify-IPA
-          path: |
-            ${{ env.OUT_IPA }}
-            ${{ env.PATCHED_OUT }}
+          path: ${{ env.OUT_IPA }}
+          archive: false
+          if-no-files-found: error
+
+      - name: Upload patched IPA artifact
+        if: ${{ inputs.upload_method == 'artifacts' || inputs.upload_method == 'both' }}
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ env.PATCHED_IPA }}
+          archive: false
           if-no-files-found: error
 
       - name: Upload IPA(s) to filebin.net
@@ -166,7 +174,7 @@ jobs:
           {
             echo "### 📦 filebin.net download"
           } >> "$GITHUB_STEP_SUMMARY"
-          for IPA_PATH in "$OUT_IPA" "$PATCHED_OUT"; do
+          for IPA_PATH in "$OUT_IPA" "$PATCHED_IPA"; do
             [ -n "$IPA_PATH" ] || continue
             FILENAME=$(basename "$IPA_PATH")
             curl -fsS -X POST \
